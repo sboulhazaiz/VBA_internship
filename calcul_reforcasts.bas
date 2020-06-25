@@ -13,17 +13,17 @@ Public Function updateRRF(ByVal moisCours As Date, ByVal ligne_a_travailler As I
     'calcul du nouveau reel :
     For i = 6 To 54 Step 4
         If Cells(1, i).Value = moisCours Then
-            iterMoisPrec = i - 4 'on enregistre à quelle itération se trouve le mois précédant
+            iterMoisPrec = i - 4 'on enregistre Ã  quelle itÃ©ration se trouve le mois prÃ©cÃ©dant
             'MsgBox i
-            'MsgBox iterMoisPrec 'reconnait le mois à mettre à jour (rf), celui qui précède le mois en cours donc
+            'MsgBox iterMoisPrec 'reconnait le mois Ã  mettre Ã  jour (rf), celui qui prÃ©cÃ¨de le mois en cours donc
         End If
     Next i
     
-    rf_a_transf = Cells(ligne_a_travailler, iterMoisPrec + 2).Value 'sauvegarde du RF à bouger
+    rf_a_transf = Cells(ligne_a_travailler, iterMoisPrec + 2).Value 'sauvegarde du RF Ã  bouger
     'MsgBox iterMoisPrec
     'MsgBox rf_a_transf
-    Cells(ligne_a_travailler, iterMoisPrec) = rf_a_transf 'déplacement du RF en réel
-    'updateRRF = iterMoisPrec 'sauvegarde de l'itération du mois précédant le mois en cours
+    Cells(ligne_a_travailler, iterMoisPrec) = rf_a_transf 'dÃ©placement du RF en rÃ©el
+    'updateRRF = iterMoisPrec 'sauvegarde de l'itÃ©ration du mois prÃ©cÃ©dant le mois en cours
     updateRRF = iterMoisPrec
 
 End Function
@@ -40,13 +40,11 @@ Public Function calculTotalRF(ByVal ligne As Integer, ByVal iterMois As Integer)
     Total = 0
     For i = 2 To iterMois - 4 Step 4
         Total = Total + Cells(ligne, i).Value
-        MsgBox Cells(ligne, i).Value
     Next i
     
 
-    For j = iterMois To 48 Step 4
+    For j = iterMois + 2 To 48 Step 4
         Total = Total + Cells(ligne, j).Value
-        MsgBox Cells(ligne, j).Value
     Next j
     
     Cells(ligne, 53).Value = Total
@@ -65,22 +63,25 @@ Sub reforecast()
     'totaltxt = celltotalrf.Value
     'MsgBox celltotalrf
     'MsgBox moisEnCours
-    'moisPrec = updateRRF(moisEnCours)  15 954 €
+    'moisPrec = updateRRF(moisEnCours)
     For i = 3 To last_row - 1 Step 1
-        moisPrec = updateRRF(moisEnCours, i)
+        moisPrec = updateRRF(moisEnCours, i) 'penser Ã  dÃ©-commenter Ã§a aprÃ¨s
     Next i
+    
     IterMoisCours = getIterMois(moisEnCours)
     
     For j = 3 To last_row Step 1
-        Var = calculTotalR(j, IterMoisCours) 'on envoie l'itération du mois en cours pour savoir où s'arrêter
+        Var = calculTotalR(j, IterMoisCours) 'on envoie l'itÃ©ration du mois en cours pour savoir oÃ¹ s'arrÃªter
     Next j
     
-    Var = calculTotalRF(3, IterMoisCours)
+    For k = 3 To last_row Step 1
+        Var = calculTotalRF(k, IterMoisCours)
+    Next k
     
-    'alors je sais pas pq la fonction RF donne tjrs total de 0 ? soucsi dans la 2ème boucle à priori
+    'alors je sais pas pq la fonction RF donne tjrs total de 0 ? soucis dans la 2Ã¨me boucle Ã  priori
     
     
-    'reste à faire : une fonction qui calcule le nouveau R puis RF total après cette modif
+    'reste Ã  faire : une fonction qui calcule le nouveau R puis RF total aprÃ¨s cette modif
     
     
     

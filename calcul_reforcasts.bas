@@ -14,6 +14,9 @@ Global gTotalB As Integer
 Global gTotalRF As Integer
 Global gLigneDebut As Integer 'PARAMETRER
 Global gLigneFin As Integer
+Global gLignesDates As Integer
+Global excp(8) As Integer
+
 'PENSER A AJOUTER VARIABLES DES LIGNES A EXCLURE
 
 Public Function switchBehavior(ByVal Sheet As String)
@@ -31,6 +34,11 @@ Public Function switchBehavior(ByVal Sheet As String)
             gTotalB = 52
             gTotalRF = 53
             gStep = 4
+            gLignesDates = 1
+            excp(0) = 7 'lignes à exclure de l'algo car pas à écrire ici
+            excp(1) = 6
+            excp(2) = 103
+            
         Case "GESTION DES TEMPS"
             Worksheets("GESTION DES TEMPS").Activate
             gIterMin = 6 'colonne début iteration
@@ -43,6 +51,9 @@ Public Function switchBehavior(ByVal Sheet As String)
             gTotalB = 44
             gTotalRF = 45
             gStep = 3
+            gLignesDates = 6
+            excp(0) = 0 'pas d'exception
+            
         Case "PLAN TRESO PROJET"
             Worksheets("PLAN TRESO PROJET").Activate
             gIterMin = 2
@@ -59,17 +70,18 @@ Public Function switchBehavior(ByVal Sheet As String)
     
 End Function
 
-Public Function getIterMois(ByVal moisCours As Date) As Integer
+Public Function getIterMois(ByVal moisCours As Date, ByVal selectedSheet As String) As Integer
     Dim i As Integer
-
-    For i = 6 To 54 Step 4
-        If Cells(1, i).Value = moisCours Then
+    
+    switchBehavior (selectedSheet)
+    For i = gIterMin To gIterMaxRF Step gStep
+        If Cells(gLignesDates, i).Value = moisCours Then
             getIterMois = i
         End If
     Next i
     
 End Function
-Public Function updateRRF(ByVal moisCours As Date)
+Public Function updateRRF(ByVal moisCours As Date, ByVal selectedSheet As String)
     Dim i As Integer
     Dim k As Integer
     Dim iterMoisPrec As Integer
@@ -80,10 +92,12 @@ Public Function updateRRF(ByVal moisCours As Date)
     Dim last_row As Integer
     Worksheets("SUIVI PROJET").Activate
     
+    switchBehavior (selectedSheet)
+    
     i = 2
     k = 3
     last_row = Cells(Rows.Count, 2).End(xlUp).Row
-    moisDemande = getIterMois(moisCours)
+    moisDemande = getIterMois(moisCours, selectedSheet) 'PENSER A GENERALISER CETTE FONCTION
     iterMoisPrec = moisDemande - 4
     For i = 2 To 46 Step 4
         If Cells(104, i).Value > 0 Then 'possibilité automatiser en remplçant 104 par last_row
@@ -97,8 +111,7 @@ Public Function updateRRF(ByVal moisCours As Date)
     If moisDemande > moisReel Then ' cas où on demande une date future par rapport à l'état du tableau
         For i = moisReel To moisDemande - 4 Step 4
             For k = 3 To last_row - 1 Step 1
-                
-                Cells(k, i) = Cells(k, i + 2).Value
+                    Cells(k, i) = Cells(k, i + 2).Value
             Next k
         Next i
     End If
@@ -108,12 +121,11 @@ Public Function updateRRF(ByVal moisCours As Date)
     If moisDemande < moisReel Then ' cas où on demande une date antérieure par rapport à l'état du tableau
         For i = moisReel - 4 To moisDemande Step -4
             For k = 3 To last_row - 1 Step 1
-                Cells(k, i) = ""
+                    Cells(k, i) = ""
             Next k
         Next i
          
     End If
-    'ALORS LE SOUCIS C'EST QUE LA CA SEMBLE NE PAS PRENDRE EN COMPTE LA LIGNE 86 ? PQ JE NE SAIS PAS ENCORE
     
     'Worksheets(SelectedSheet).Activate
     'PENSER A RAJOUTER LE CAS DE JANVIER !!
@@ -130,99 +142,153 @@ Public Function updateRRF(ByVal moisCours As Date)
     updateRRF = iterMoisPrec
 
 End Function
-Public Function calculTotalR(ByVal ligne As Integer, ByVal iterMois As Integer, ByVal SelectedSheet As String)
+Public Function calculTotalR(ByVal selectedSheet As String)
     
     Dim Total As Double
+    Dim ligne As Integer
     Dim j As Integer
-    switchBehavior (SelectedSheet)
+    Dim iterMois As Integer
     
-    Total = 0
-    For j = gIterMin To gIterMaxR Step gStep
-        Total = Total + Cells(ligne, j).Value
-    Next j
+    switchBehavior (selectedSheet)
     
-    Cells(ligne, gTotalR).Value = Total
+    iterMois = getIterMois(ActiveWorkbook.Sheets("REPORTING").Range("C2").Value, selectedSheet)
+ 
+    For ligne = gLigneDebut To gLigneFin
+        Total = 0#
+        If IsInArray(ligne, excp) = False Then
+            For j = gIterMin To gIterMaxR Step gStep
+                    Total = Total + Cells(ligne, j).Value
+            Next j
+            Cells(ligne, gTotalR).Value = Total
+        End If
+    Next ligne
+    
     
 End Function
-Public Function calculTotalRF(ByVal ligne As Integer, ByVal iterMois As Integer)
+Public Function calculTotalRF(ByVal selectedSheet As String)
     Dim Total As Double
     Dim i As Integer
     Dim j As Integer
+    Dim ligne As Integer
+    Dim ValAajouter As Double
+    Dim iterMois As Integer
+    Dim dateActu As Date
+    
+    dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
+    
+    iterMois = getIterMois(dateActu, selectedSheet)
+    If dateActu = 1 Then
+        MsgBox "janvier"
+    End If
+    MsgBox dateActu
+        
+    
+    ValAajouter = 0#
+    switchBehavior (selectedSheet)
     
     
-    Total = 0
-    For i = 2 To iterMois - 4 Step 4
-        Total = Total + Cells(ligne, i).Value
-    Next i
     
-
-    For j = iterMois + 2 To 48 Step 4
-        Total = Total + Cells(ligne, j).Value
-    Next j
+    For ligne = gLigneDebut To gLigneFin
+        Total = 0#
+        If IsInArray(ligne, excp) = False Then
+            For i = 2 To iterMois - 4 Step 4
+                ValAajouter = Cells(ligne, i).Value
+                Total = Total + ValAajouter
+            Next i
+            
+        
+            For j = iterMois + 2 To 48 Step 4 'LE PB C QUE CA PASSE PAR LA CASE 3:35 AOLORS QUE CA DEVRAIT PAS
+                ValAajouter = Cells(ligne, j).Value
+                Total = Total + ValAajouter
+            Next j
+            
+            Cells(ligne, gTotalRF).Value = Total
+        End If
+    Next ligne
     
     calculTotalRF = Total
-    Cells(ligne, 53).Value = Total
+    
     
 End Function
 Public Function calculAdd(val1 As Integer, val2 As Integer)
     calculAdd = val1 + val2
 End Function
-Public Function calculTotalB(ByVal sheetselect As String) As Double
+Public Function calculTotalB(ByVal selectedSheet As String) As Double
     Dim Total As Double
     Dim i As Integer
     Dim ligne As Integer
     
-    Total = 0#
-    'Dim ligne As Integer
+    switchBehavior (selectedSheet)
+    
+    
     For ligne = gLigneDebut To gLigneFin
-        For i = gIterMin + 1 To gIterMaxB Step gStep
-            Total = Total + Cells(ligne, i).Value 'à finir à adapter
-        Next i
+        Total = 0#
+        
+        If IsInArray(ligne, excp) = False Then
+            For i = gIterMin + 1 To gIterMaxB Step gStep
+                    Total = Total + Cells(ligne, i).Value 'à finir à adapter
+            Next i
+            Cells(ligne, gTotalB).Value = Total
+        End If
+    
     Next ligne
     
     calculTotalB = Total
-    Cells(ligne, gTotalB).Value = Total
+    
     
 End Function
-Public Function calculREPORTING() As Double
-    MsgBox "Test"
+Private Function IsInArray(valToBeFound As Variant, arr As Variant) As Boolean
+'DEVELOPER: Ryan Wells (wellsr.com)
+'DESCRIPTION: Function to check if a value is in an array of values
+'INPUT: Pass the function a value to search for and an array of values of any data type.
+'OUTPUT: True if is in array, false otherwise
+Dim element As Variant
+On Error GoTo IsInArrayError: 'array is empty
+    For Each element In arr
+        If element = valToBeFound Then
+            IsInArray = True
+            Exit Function
+        End If
+    Next element
+Exit Function
+IsInArrayError:
+On Error GoTo 0
+IsInArray = False
 End Function
 Sub reforecast()
     Dim last_row As Long
     Dim moisEnCours As Date
     Dim i As Integer
     Dim Var As Double
-    Dim IterMoisCours As Integer
-    Worksheets("SUIVI PROJET").Activate
+
+    Dim selected_sheet As String
+    
+    selected_sheet = "SUIVI PROJET"
+    
+    Worksheets(selected_sheet).Activate
     last_row = Cells(Rows.Count, 2).End(xlUp).Row ' A CORRIGER
     
 
     Worksheets("REPORTING").Activate
-    moisEnCours = Range("C2").Value
     'Worksheets("GESTION DES TEMPS").Activate 'ATTENTION DS LE NOM DE BASE DE LA SHEET : ESPACE !!
     'celltotalrf = Cells(3, 53).Value
     'totaltxt = celltotalrf.Value
     
     Worksheets("SUIVI PROJET").Activate
-    Var = updateRRF(moisEnCours)
+    Var = updateRRF(moisEnCours, selected_sheet)
+    switchBehavior ("SUIVI PROJET")
+    
 
-    
-    
-    
-    IterMoisCours = getIterMois(moisEnCours)
-    For i = 9 To last_row Step 1
-        Var = calculTotalR(i, IterMoisCours, "SUIVI PROJET") 'on envoie l'itération du mois en cours pour savoir où s'arrêter
-    Next i
+    'For i = 3 To last_row Step 1
+    Var = calculTotalR("SUIVI PROJET") 'on envoie l'itération du mois en cours pour savoir où s'arrêter
+    'Next i
     
     Var = calculTotalB("SUIVI PROJET")
     
-    For i = 3 To last_row Step 1
-        Var = calculTotalRF(i, IterMoisCours)
-    Next i
+    'For i = 3 To last_row Step 1
+    Var = calculTotalRF("SUIVI PROJET")
+    'Next i
+
     
-    'penser à adapter le reste des autres fonctions, pour que ça calcule à toutes les feuilles 
-    
-    
-    'reste à faire : une fonction qui calcule le nouveau R puis RF total après cette modif
         
 End Sub

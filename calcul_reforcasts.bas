@@ -81,7 +81,7 @@ Public Function getIterMois(ByVal moisCours As Date, ByVal selectedSheet As Stri
     Next i
     
 End Function
-Public Function updateRRF(ByVal moisCours As Date, ByVal selectedSheet As String)
+Public Function updateRRF(ByVal selectedSheet As String)
     Dim i As Integer
     Dim k As Integer
     Dim iterMoisPrec As Integer
@@ -90,10 +90,12 @@ Public Function updateRRF(ByVal moisCours As Date, ByVal selectedSheet As String
     Dim moisDemande As Integer
     Dim moisActuel As Integer
     Dim last_row As Integer
+    Dim moisCours As Date
     Worksheets("SUIVI PROJET").Activate
     
     switchBehavior (selectedSheet)
     
+    moisCours = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
     i = 2
     k = 3
     last_row = Cells(Rows.Count, 2).End(xlUp).Row
@@ -177,10 +179,6 @@ Public Function calculTotalRF(ByVal selectedSheet As String)
     dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
     
     iterMois = getIterMois(dateActu, selectedSheet)
-    If dateActu = 1 Then
-        MsgBox "janvier"
-    End If
-    MsgBox dateActu
         
     
     ValAajouter = 0#
@@ -191,13 +189,13 @@ Public Function calculTotalRF(ByVal selectedSheet As String)
     For ligne = gLigneDebut To gLigneFin
         Total = 0#
         If IsInArray(ligne, excp) = False Then
-            For i = 2 To iterMois - 4 Step 4
+            For i = 2 To iterMois - 8 Step 4
                 ValAajouter = Cells(ligne, i).Value
                 Total = Total + ValAajouter
             Next i
             
         
-            For j = iterMois + 2 To 48 Step 4 'LE PB C QUE CA PASSE PAR LA CASE 3:35 AOLORS QUE CA DEVRAIT PAS
+            For j = iterMois - 2 To 48 Step 4 'LE PB C QUE CA PASSE PAR LA CASE 3:35 AOLORS QUE CA DEVRAIT PAS
                 ValAajouter = Cells(ligne, j).Value
                 Total = Total + ValAajouter
             Next j
@@ -275,7 +273,7 @@ Sub reforecast()
     'totaltxt = celltotalrf.Value
     
     Worksheets("SUIVI PROJET").Activate
-    Var = updateRRF(moisEnCours, selected_sheet)
+    Var = updateRRF(selected_sheet)
     switchBehavior ("SUIVI PROJET")
     
 

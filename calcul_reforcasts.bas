@@ -189,14 +189,20 @@ Public Function calculTotalRF(ByVal selectedSheet As String)
     For ligne = gLigneDebut To gLigneFin
         Total = 0#
         If IsInArray(ligne, excp) = False Then
-            For i = 2 To iterMois - 8 Step 4
+            For i = 2 To iterMois - 4 Step 4
                 ValAajouter = Cells(ligne, i).Value
+                If ligne = gLigneFin Then
+                    MsgBox ValAajouter
+                End If
                 Total = Total + ValAajouter
             Next i
             
         
-            For j = iterMois - 2 To 48 Step 4 'LE PB C QUE CA PASSE PAR LA CASE 3:35 AOLORS QUE CA DEVRAIT PAS
+            For j = iterMois + 2 To 48 Step 4
                 ValAajouter = Cells(ligne, j).Value
+                If ligne = gLigneFin Then
+                    MsgBox ValAajouter
+                End If
                 Total = Total + ValAajouter
             Next j
             
@@ -273,7 +279,7 @@ Sub reforecast()
     'totaltxt = celltotalrf.Value
     
     Worksheets("SUIVI PROJET").Activate
-    Var = updateRRF(selected_sheet)
+    'Var = updateRRF(selected_sheet)
     switchBehavior ("SUIVI PROJET")
     
 

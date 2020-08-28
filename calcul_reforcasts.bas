@@ -53,19 +53,6 @@ Public Function switchBehavior(ByVal Sheet As String)
             gStep = 3
             gLignesDates = 6
             excp(0) = 0 'pas d'exception
-            
-        Case "PLAN TRESO PROJET"
-            Worksheets("PLAN TRESO PROJET").Activate
-            gIterMin = 2
-            gLigneDebut = 3 'ligne démarrage
-            gLigneFin = Cells(Rows.Count, 2).End(xlUp).Row
-            gIterMaxR = 46
-            gIterMaxB = 47
-            gIterMaxRF = 48
-            gTotalR = 51
-            gTotalB = 52
-            gTotalRF = 53
-            gStep = 4
     End Select
     
 End Function
@@ -158,7 +145,7 @@ Public Function calculTotalR(ByVal selectedSheet As String)
     For ligne = gLigneDebut To gLigneFin
         Total = 0#
         If IsInArray(ligne, excp) = False Then
-            For j = gIterMin To gIterMaxR Step gStep
+            For j = gIterMin To iterMois Step gStep
                     Total = Total + Cells(ligne, j).Value
             Next j
             Cells(ligne, gTotalR).Value = Total
@@ -176,41 +163,46 @@ Public Function calculTotalRF(ByVal selectedSheet As String)
     Dim iterMois As Integer
     Dim dateActu As Date
     
-    dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
     
-    iterMois = getIterMois(dateActu, selectedSheet)
-        
-    
-    ValAajouter = 0#
+    dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value 'on récupère la date à laquelle le reporting est réglé
     switchBehavior (selectedSheet)
     
+    If Month(dateActu) = 1 Then
+        For i = gLigneDebut To gLigneFin Step 1
+            Cells(i, gTotalRF).Value = Cells(i, gTotalB).Value
+        Next i
+    Else
     
-    
-    For ligne = gLigneDebut To gLigneFin
-        Total = 0#
-        If IsInArray(ligne, excp) = False Then
-            For i = 2 To iterMois - 4 Step 4
-                ValAajouter = Cells(ligne, i).Value
-                If ligne = gLigneFin Then
-                    MsgBox ValAajouter
-                End If
-                Total = Total + ValAajouter
-            Next i
+        iterMois = getIterMois(dateActu, selectedSheet) 'on récupère l'itération à laquelle s'arrêter
             
         
-            For j = iterMois + 2 To 48 Step 4
-                ValAajouter = Cells(ligne, j).Value
-                If ligne = gLigneFin Then
-                    MsgBox ValAajouter
-                End If
-                Total = Total + ValAajouter
-            Next j
+        ValAajouter = 0#
+        
+        
+        
+        
+        For ligne = gLigneDebut To gLigneFin
+            Total = 0#
+            If IsInArray(ligne, excp) = False Then
+                For i = gIterMin To iterMois - gStep Step gStep
+                    ValAajouter = Cells(ligne, i).Value
+                    Total = Total + ValAajouter
+                Next i
+                
             
-            Cells(ligne, gTotalRF).Value = Total
-        End If
-    Next ligne
+                For j = iterMois + 2 To gIterMaxRF Step gStep
+                    ValAajouter = Cells(ligne, j).Value
+                    Total = Total + ValAajouter
+                Next j
+                
+                Cells(ligne, gTotalRF).Value = Total
+            End If
+        Next ligne
+        
+        calculTotalRF = Total
     
-    calculTotalRF = Total
+    End If
+    
     
     
 End Function
@@ -267,32 +259,18 @@ Sub reforecast()
 
     Dim selected_sheet As String
     
-    selected_sheet = "SUIVI PROJET"
-    
-    Worksheets(selected_sheet).Activate
-    last_row = Cells(Rows.Count, 2).End(xlUp).Row ' A CORRIGER
-    
-
-    Worksheets("REPORTING").Activate
-    'Worksheets("GESTION DES TEMPS").Activate 'ATTENTION DS LE NOM DE BASE DE LA SHEET : ESPACE !!
-    'celltotalrf = Cells(3, 53).Value
-    'totaltxt = celltotalrf.Value
-    
-    Worksheets("SUIVI PROJET").Activate
-    'Var = updateRRF(selected_sheet)
     switchBehavior ("SUIVI PROJET")
-    
 
-    'For i = 3 To last_row Step 1
-    Var = calculTotalR("SUIVI PROJET") 'on envoie l'itération du mois en cours pour savoir où s'arrêter
-    'Next i
-    
+    Var = calculTotalR("SUIVI PROJET")
     Var = calculTotalB("SUIVI PROJET")
-    
-    'For i = 3 To last_row Step 1
     Var = calculTotalRF("SUIVI PROJET")
-    'Next i
 
+    switchBehavior ("GESTION DES TEMPS")
+    
+    Var = calculTotalR("GESTION DES TEMPS")
+    Var = calculTotalB("GESTION DES TEMPS")
+    Var = calculTotalRF("GESTION DES TEMPS")
+    
     
         
 End Sub

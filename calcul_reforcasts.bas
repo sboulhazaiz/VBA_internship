@@ -222,7 +222,7 @@ Public Function calculTotalB(ByVal selectedSheet As String) As Double
         
         If IsInArray(ligne, excp) = False Then
             For i = gIterMin + 1 To gIterMaxB Step gStep
-                    Total = Total + Cells(ligne, i).Value 'à finir à adapter
+                Total = Total + Cells(ligne, i).Value 'à finir à adapter
             Next i
             Cells(ligne, gTotalB).Value = Total
         End If
@@ -232,6 +232,81 @@ Public Function calculTotalB(ByVal selectedSheet As String) As Double
     calculTotalB = Total
     
     
+End Function
+Private Function reporting()
+Dim i As Integer
+Dim dateActu As Date
+Dim iterMois As Integer
+Dim k As Integer
+Dim resultat As Double
+Dim lignes(10) As Integer 'listes des lignes pr calculer totaux reporting
+switchBehavior ("SUIVI PROJET") ' on passe en mode suivi projet comme on aura besoin que de ça
+
+dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
+iterMois = getIterMois(dateActu, "SUIVI PROJET") 'on récupère l'itération à laquelle s'arrêter
+
+resultat = 0
+lignes(5) = 8
+lignes(6) = 12
+lignes(7) = 31
+lignes(8) = 48
+lignes(9) = 85
+
+
+
+For i = 5 To 9 Step 13 'calcul budget
+    For k = gIterMin + 1 To iterMois + 4 Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+    Next k
+    Sheets("REPORTING").Cells(i, 3).Value = resultat 'on écrit le résultat dans la case
+    resultat = 0 'on remet les compteurs à 0
+Next i
+
+For i = 5 To 9 Step 13 'calcul reforecast
+    For k = gIterMin To iterMois - 4 Step gStep 'calcul des budgets initiaux // -4 car sinon on va compter le réel du mois en cours or on voudra le RF
+        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+    Next k
+    resultat = resultat + Cells(lignes(i), iterMois + 2).Value ' ajout RF du mois en cours
+    Sheets("REPORTING").Cells(i, 4).Value = resultat 'on écrit le résultat dans la case
+    resultat = 0 'on remet les compteurs à 0
+Next i
+
+For i = 5 To 9 Step 13 'calcul réel
+    For k = gIterMin To iterMois + 4 Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+    Next k
+    Sheets("REPORTING").Cells(i, 5).Value = resultat 'on écrit le résultat dans la case
+    resultat = 0 'on remet les compteurs à 0
+Next i
+
+' ---------------- CHECKS ---------------- :
+resultat = 0 'check budget
+For k = gIterMin + 1 To iterMois + 4 Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
+Next k
+Sheets("REPORTING").Cells(13, 3).Value = Sheets("REPORTING").Range("C10").Value - resultat 'on écrit le résultat dans la case
+
+
+resultat = 0 'check rf
+For k = gIterMin To iterMois - 4 Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
+Next k
+resultat = resultat + Cells(gLigneFin, iterMois + 2).Value ' ajout RF du mois en cours
+MsgBox k
+Sheets("REPORTING").Cells(13, 4).Value = Sheets("REPORTING").Range("D10").Value - resultat 'on écrit le résultat dans la case
+
+
+resultat = 0 'check reel
+For k = gIterMin To iterMois + 4 Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
+Next k
+Sheets("REPORTING").Cells(13, 5).Value = Sheets("REPORTING").Range("E10").Value - resultat 'on écrit le résultat dans la case
+
+
+
+'Range("C13").Value = Application.Sum(Range(Cells(2, 1), Cells(3, 2)))
+'Range("C13").Value = resultat
+
 End Function
 Private Function IsInArray(valToBeFound As Variant, arr As Variant) As Boolean
 'DEVELOPER: Ryan Wells (wellsr.com)
@@ -261,16 +336,16 @@ Sub reforecast()
     
     switchBehavior ("SUIVI PROJET")
 
-    Var = calculTotalR("SUIVI PROJET")
-    Var = calculTotalB("SUIVI PROJET")
-    Var = calculTotalRF("SUIVI PROJET")
+    'Var = calculTotalR("SUIVI PROJET")
+    'Var = calculTotalB("SUIVI PROJET")
+    'Var = calculTotalRF("SUIVI PROJET")
 
     switchBehavior ("GESTION DES TEMPS")
     
-    Var = calculTotalR("GESTION DES TEMPS")
-    Var = calculTotalB("GESTION DES TEMPS")
-    Var = calculTotalRF("GESTION DES TEMPS")
-    
+    'Var = calculTotalR("GESTION DES TEMPS")
+    'Var = calculTotalB("GESTION DES TEMPS")
+    'Var = calculTotalRF("GESTION DES TEMPS")
+    Var = reporting()
     
         
 End Sub

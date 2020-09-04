@@ -15,7 +15,10 @@ Global gTotalRF As Integer
 Global gLigneDebut As Integer 'PARAMETRER
 Global gLigneFin As Integer
 Global gLignesDates As Integer
-Global excp(8) As Integer
+Global excp(100) As Integer 'tableau des lignes de suivi projet à exclure (totaux, lignes vides, checks...)
+Global lignesRep(100) As Integer '
+Global nblRep As Integer 'le nb de lignes dans reporting qu'il faudra chercher dans Suivi Projet
+'Global excp_sp(100) As Integer 'tableau exceptions suivi projet
 
 'PENSER A AJOUTER VARIABLES DES LIGNES A EXCLURE
 
@@ -26,7 +29,7 @@ Public Function switchBehavior(ByVal Sheet As String)
             Worksheets("SUIVI PROJET").Activate
             gIterMin = 2 'colonne début iteration
             gLigneDebut = 3 'ligne démarrage
-            gLigneFin = Cells(Rows.Count, 2).End(xlUp).Row
+            gLigneFin = Cells(Rows.Count, 3).End(xlUp).Row
             gIterMaxR = 46
             gIterMaxB = 47
             gIterMaxRF = 48
@@ -35,15 +38,13 @@ Public Function switchBehavior(ByVal Sheet As String)
             gTotalRF = 53
             gStep = 4
             gLignesDates = 1
-            excp(0) = 7 'lignes à exclure de l'algo car pas à écrire ici
-            excp(1) = 6
-            excp(2) = 103
+            
             
         Case "GESTION DES TEMPS"
             Worksheets("GESTION DES TEMPS").Activate
             gIterMin = 6 'colonne début iteration
             gLigneDebut = 9 'ligne démarrage
-            gLigneFin = Cells(Rows.Count, 2).End(xlUp).Row
+            gLigneFin = Cells(Rows.Count, 3).End(xlUp).Row
             gIterMaxR = 39
             gIterMaxB = 40
             gIterMaxRF = 41
@@ -52,6 +53,7 @@ Public Function switchBehavior(ByVal Sheet As String)
             gTotalRF = 45
             gStep = 3
             gLignesDates = 6
+            Erase excp
             excp(0) = 0 'pas d'exception
     End Select
     
@@ -239,43 +241,36 @@ Dim dateActu As Date
 Dim iterMois As Integer
 Dim k As Integer
 Dim resultat As Double
-Dim lignes(10) As Integer 'listes des lignes pr calculer totaux reporting
-switchBehavior ("SUIVI PROJET") ' on passe en mode suivi projet comme on aura besoin que de ça
+
 
 dateActu = ActiveWorkbook.Sheets("REPORTING").Range("C2").Value
 iterMois = getIterMois(dateActu, "SUIVI PROJET") 'on récupère l'itération à laquelle s'arrêter
-
+switchBehavior ("SUIVI PROJET") ' on passe en mode suivi projet comme on aura besoin que de ça
 resultat = 0
-lignes(5) = 8
-lignes(6) = 12
-lignes(7) = 31
-lignes(8) = 48
-lignes(9) = 85
 
 
-
-For i = 5 To 9 Step 13 'calcul budget
+For i = 0 To nblRep - 1 Step 1 'calcul budget
     For k = gIterMin + 1 To iterMois + 4 Step gStep 'calcul des budgets initiaux
-        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+        resultat = resultat + Cells(lignesRep(i), k).Value 'on est dans la ligne est on avance col. par col.
     Next k
-    Sheets("REPORTING").Cells(i, 3).Value = resultat 'on écrit le résultat dans la case
+    Sheets("REPORTING").Cells(i + 5, 3).Value = resultat 'on écrit le résultat dans la case / on fait +5 parce que dans l'onglet reporting, ça commence à la ligne 5, et le i commence à 0, donc comme ça, il fait 0+5 = 5, et il va chercher la bonne ligne, et ainsi de suite
     resultat = 0 'on remet les compteurs à 0
 Next i
 
-For i = 5 To 9 Step 13 'calcul reforecast
+For i = 0 To nblRep - 1 Step 1 'calcul reforecast
     For k = gIterMin To iterMois - 4 Step gStep 'calcul des budgets initiaux // -4 car sinon on va compter le réel du mois en cours or on voudra le RF
-        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+        resultat = resultat + Cells(lignesRep(i), k).Value 'on est dans la ligne est on avance col. par col.
     Next k
-    resultat = resultat + Cells(lignes(i), iterMois + 2).Value ' ajout RF du mois en cours
-    Sheets("REPORTING").Cells(i, 4).Value = resultat 'on écrit le résultat dans la case
+    resultat = resultat + Cells(lignesRep(i), iterMois + 2).Value ' ajout RF du mois en cours
+    Sheets("REPORTING").Cells(i + 5, 4).Value = resultat 'on écrit le résultat dans la case
     resultat = 0 'on remet les compteurs à 0
 Next i
 
-For i = 5 To 9 Step 13 'calcul réel
-    For k = gIterMin To iterMois + 4 Step gStep 'calcul des budgets initiaux
-        resultat = resultat + Cells(lignes(i), k).Value 'on est dans la ligne est on avance col. par col.
+For i = 0 To nblRep - 1 Step 1 'calcul réel
+    For k = gIterMin To iterMois Step gStep 'calcul des budgets initiaux
+        resultat = resultat + Cells(lignesRep(i), k).Value 'on est dans la ligne est on avance col. par col.
     Next k
-    Sheets("REPORTING").Cells(i, 5).Value = resultat 'on écrit le résultat dans la case
+    Sheets("REPORTING").Cells(i + 5, 5).Value = resultat 'on écrit le résultat dans la case
     resultat = 0 'on remet les compteurs à 0
 Next i
 
@@ -284,23 +279,22 @@ resultat = 0 'check budget
 For k = gIterMin + 1 To iterMois + 4 Step gStep 'calcul des budgets initiaux
         resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
 Next k
-Sheets("REPORTING").Cells(13, 3).Value = Sheets("REPORTING").Range("C10").Value - resultat 'on écrit le résultat dans la case
-
+Sheets("REPORTING").Cells(5 + nblRep + 3, 3).Value = Sheets("REPORTING").Range("C10").Value - resultat 'on écrit le résultat dans la case
+'on va chercher la case 4 + nblRep + 3 , pour trouver la ligne de "checks", car elle se trouve toujours 3 lignes en dessous des lignes de reporting, qui elles mêmes démarrent toujours à la ligne 5 (mais on fait +4 pas +5 car on démarre déjà à la ligne 1 dans Excel)
 
 resultat = 0 'check rf
 For k = gIterMin To iterMois - 4 Step gStep 'calcul des budgets initiaux
         resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
 Next k
 resultat = resultat + Cells(gLigneFin, iterMois + 2).Value ' ajout RF du mois en cours
-MsgBox k
-Sheets("REPORTING").Cells(13, 4).Value = Sheets("REPORTING").Range("D10").Value - resultat 'on écrit le résultat dans la case
+Sheets("REPORTING").Cells(5 + nblRep + 3, 4).Value = Sheets("REPORTING").Range("D10").Value - resultat 'on écrit le résultat dans la case
 
 
 resultat = 0 'check reel
-For k = gIterMin To iterMois + 4 Step gStep 'calcul des budgets initiaux
+For k = gIterMin To iterMois Step gStep 'calcul des budgets initiaux
         resultat = resultat + Cells(gLigneFin, k).Value 'on est dans la ligne est on avance col. par col.
 Next k
-Sheets("REPORTING").Cells(13, 5).Value = Sheets("REPORTING").Range("E10").Value - resultat 'on écrit le résultat dans la case
+Sheets("REPORTING").Cells(5 + nblRep + 3, 5).Value = Sheets("REPORTING").Range("E10").Value - resultat 'on écrit le résultat dans la case
 
 
 
@@ -331,20 +325,44 @@ Sub reforecast()
     Dim moisEnCours As Date
     Dim i As Integer
     Dim Var As Double
+    Dim myValue As Integer
+    
+    i = 0
+    myValue = 1
+    nblRep = 0 ' compteur du nb de lignes Reporting à 0
+    
+    Worksheets("Suivi Projet").Activate
 
-    Dim selected_sheet As String
+    While myValue > 0
+        myValue = InputBox("Insérez, une par une, les lignes à exclure dans SUIVI PROJET (lignes vides, lignes de total, et checks). Quand vous n'avez plus de ligne à excure, entrez simplement le chiffre 0.")
+        excp(i) = myValue
+        i = i + 1
+    Wend
+    
+    i = 0
+    myValue = 1 'on réinitialise les valeurs
+    While myValue <> 0
+        myValue = InputBox("Insérez, une par une, les lignes correspondantes au Reporting dans Suivi Projet. Entrez 0 une fois que vous les avez toutes entrées.")
+        lignesRep(i) = myValue
+        i = i + 1
+        nblRep = nblRep + 1
+    Wend
+    
+    nblRep = nblRep - 1 ' on enlève 1 dans le compteur de lignes parce qu'il y a le "0" qu'on a ajouté à la fin
+    
+    
     
     switchBehavior ("SUIVI PROJET")
 
-    'Var = calculTotalR("SUIVI PROJET")
-    'Var = calculTotalB("SUIVI PROJET")
-    'Var = calculTotalRF("SUIVI PROJET")
+    Var = calculTotalR("SUIVI PROJET")
+    Var = calculTotalB("SUIVI PROJET")
+    Var = calculTotalRF("SUIVI PROJET")
 
     switchBehavior ("GESTION DES TEMPS")
     
-    'Var = calculTotalR("GESTION DES TEMPS")
-    'Var = calculTotalB("GESTION DES TEMPS")
-    'Var = calculTotalRF("GESTION DES TEMPS")
+    Var = calculTotalR("GESTION DES TEMPS")
+    Var = calculTotalB("GESTION DES TEMPS")
+    Var = calculTotalRF("GESTION DES TEMPS")
     Var = reporting()
     
         

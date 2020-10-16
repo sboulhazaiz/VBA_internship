@@ -1,3 +1,4 @@
+Attribute VB_Name = "Module1"
 Option Explicit
 'norme de codage : 'g' au début d'une variable signifie qu'elle est globale
 Global gIterMin As Integer
@@ -334,19 +335,20 @@ Sub reforecast()
     Worksheets("Suivi Projet").Activate
 
     While myValue > 0
-        myValue = InputBox("Insérez, une par une, les lignes à exclure dans SUIVI PROJET (lignes vides, lignes de total, et checks). Quand vous n'avez plus de ligne à excure, entrez simplement le chiffre 0.")
+        myValue = InputBox("EXCLUSIONS : Insérez, une par une, les lignes à exclure dans SUIVI PROJET (lignes vides, et checks). Quand vous n'avez plus de ligne à excure, entrez simplement le chiffre 0.")
         excp(i) = myValue
         i = i + 1
     Wend
-    
+    MsgBox "Exclusions enregistrées."
     i = 0
     myValue = 1 'on réinitialise les valeurs
     While myValue <> 0
-        myValue = InputBox("Insérez, une par une, les lignes correspondantes au Reporting dans Suivi Projet. Entrez 0 une fois que vous les avez toutes entrées.")
+        myValue = InputBox("REPORTING : Insérez les lignes du SUIVI PROJET qui sont à reporting dans le REPORTING. Entrez 0 une fois que vous les avez toutes entrées.")
         lignesRep(i) = myValue
         i = i + 1
         nblRep = nblRep + 1
     Wend
+    MsgBox "Lignes reporting enregistrées."
     
     nblRep = nblRep - 1 ' on enlève 1 dans le compteur de lignes parce qu'il y a le "0" qu'on a ajouté à la fin
     

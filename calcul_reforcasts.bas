@@ -21,7 +21,7 @@ Global lignesRep(100) As Integer '
 Global nblRep As Integer 'le nb de lignes dans reporting qu'il faudra chercher dans Suivi Projet
 'Global excp_sp(100) As Integer 'tableau exceptions suivi projet
 
-'PENSER A AJOUTER VARIABLES DES LIGNES A EXCLURE
+
 
 Public Function switchBehavior(ByVal Sheet As String)
     'cette fonction sert à changer le fonction de la macron en fonction de la feuille sur laquelle elle travaille
@@ -89,7 +89,7 @@ Public Function updateRRF(ByVal selectedSheet As String)
     i = 2
     k = 3
     last_row = Cells(Rows.Count, 2).End(xlUp).Row
-    moisDemande = getIterMois(moisCours, selectedSheet) 'PENSER A GENERALISER CETTE FONCTION
+    moisDemande = getIterMois(moisCours, selectedSheet)
     iterMoisPrec = moisDemande - 4
     For i = 2 To 46 Step 4
         If Cells(104, i).Value > 0 Then 'possibilité automatiser en remplçant 104 par last_row
@@ -108,7 +108,7 @@ Public Function updateRRF(ByVal selectedSheet As String)
         Next i
     End If
     
-    'NE PAS OUBLIER FAIRE LA BOUCLE DANS LA FONCTION IL FAUT ENCORE LA FINIR DE LA PROGRAMMER
+
     
     If moisDemande < moisReel Then ' cas où on demande une date antérieure par rapport à l'état du tableau
         For i = moisReel - 4 To moisDemande Step -4
